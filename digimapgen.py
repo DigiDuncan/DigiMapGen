@@ -12,11 +12,9 @@ direct = {
     'SOUTH': 270,
     'WEST': 180}
 #Current version number.
-version = "0.2.2"
+version = "0.3"
 #Amount of generators.
 gencount = 1
-#Maximum tileset ID.
-tilemax = 5
 #Move types.
 ROW = 1
 COL = 2
@@ -37,15 +35,12 @@ tileset = {
 'WATER' : [2, '#19cbd1', '#19cbd1', None, None],
 'SAND' : [3, '#fff373', '#ffce52', None, None],
 'TREE' : [4, '#14a333', '#2e1a03', '\uD83C\uDF32', '#2e1a03'], #Unicode character: 🌲
-'BLACK' : [5, '#000000', '#ffffff', None, None]
+'BLACK' : [5, '#000000', '#ffffff', None, None],
+'STONE' : [6, '#666666', '#333333', None, None]
 }
 
-#Settings.
-settings = {
-    'mapwidth' : 10,
-    'generator' : 0,
-    'tilesize' : 10
-}
+#Maximum tileset ID.
+tilemax = len(tileset)
 
 #Global variables.
 #Loaded map.
@@ -53,16 +48,21 @@ map = [[]]
 #Window dimensions.
 monitorheight = 600
 monitorwidth = 800
+#Other!
+mapwidth = 50
+generator = 1
+tilesize = 10
 
 def main():
 #Main loop.
+    logger.warn(f"DigiMapGen v{version}")
     turtle.title(f"DigiMapGen v{version}")
     turtle.home()
     chooseSettings()
     debugInfo()
     goToStart()
     turtle.color('white', 'black') #Debug only.
-    generate(settings['generator'])
+    generate(generator)
     drawMap()
 
 def getMonitorDimensions():
@@ -74,18 +74,18 @@ def getMonitorDimensions():
 
 def chooseSettings():
 #Get user input to determine to settings.
-    global settings
+    global mapwidth, tilesize, generator
     #Ask the user which generator they want to use.
-    gen = turtle.numinput('DigiMapGen', 'Input a generator number:', 0, minval = 0, maxval = gencount)
+    gen = turtle.numinput('DigiMapGen', 'Input a generator number:', 1, minval = 0, maxval = gencount)
     #Make sure the user put in a real generator.
-    if gen in range(gencount + 1): settings['generator'] = gen
+    if gen in range(gencount + 1): generator = gen
     else:
         logger.warn('ERROR: Invalid generator.')
         chooseSettings()
     #Ask the user how many tiles across they want the map to be.
-    settings['mapwidth'] = int(turtle.numinput('DigiMapGen', 'Set map width:', 10))
+    mapwidth = int(turtle.numinput('DigiMapGen', 'Set map width:', 50))
     #Get animation delay from user.
-    delay = turtle.numinput('DigiMapGen', 'Set animation delay:', 0.1)
+    delay = turtle.numinput('DigiMapGen', 'Set animation delay:', 0)
     if delay <= 0:
         turtle.tracer(False)
         turtle.delay(delay)
@@ -98,13 +98,13 @@ def chooseSettings():
     getMonitorDimensions()
     turtle.setup(monitorheight * winsize, monitorheight * winsize)
     #Determine tile size using math.
-    settings['tilesize'] = (turtle.window_height() * 0.9) / settings['mapwidth']
+    tilesize = (turtle.window_height() * 0.9) / mapwidth
 
 def goToStart():
 #Go to the top left of the map.
 #Makes maps more or less centered.
     turtle.up()
-    topleft = ((settings['mapwidth'] * settings['tilesize']) / 2) #Row width * tile size in px, halfed.
+    topleft = ((mapwidth * tilesize) / 2) #Row width * tile size in px, halfed.
     turtle.setpos (-topleft, topleft)
     turtle.down()
     logger.msg(f"Start location: -{topleft}, {topleft}")
@@ -114,24 +114,30 @@ def move(type):
     if type == ROW:
         turtle.up()
         turtle.seth(direct['EAST'])
-        turtle.forward(settings['tilesize'])
+        turtle.forward(tilesize)
     elif type == COL:
         turtle.up()
         turtle.seth(direct['SOUTH'])
-        turtle.forward(settings['tilesize'])
+        turtle.forward(tilesize)
         turtle.seth(direct['WEST'])
-        turtle.forward(settings['tilesize'] * settings['mapwidth'])
+        turtle.forward(tilesize * mapwidth)
     else: return
+
+def getTile(name):
+#Get tile list from tile key.
+    if name in tileset.keys(): return tileset[name]
+    else: return tileset['MISSINGNO']
 
 def chooseTile(n):
 #Get tile key from tile ID.
     if n > tilemax: return 'MISSINGNO'
-    elif n == tileset['MISSINGNO'][ID]: return 'MISSINGNO'
-    elif n == tileset['GRASS'][ID]: return 'GRASS'
-    elif n == tileset['WATER'][ID]: return 'WATER'
-    elif n == tileset['SAND'][ID]: return 'SAND'
-    elif n == tileset['TREE'][ID]: return 'TREE'
-    elif n == tileset['BLACK'][ID]: return 'BLACK'
+    elif n == getTile('MISSINGNO')[ID]: return 'MISSINGNO'
+    elif n == getTile('GRASS')[ID]: return 'GRASS'
+    elif n == getTile('WATER')[ID]: return 'WATER'
+    elif n == getTile('SAND')[ID]: return 'SAND'
+    elif n == getTile('TREE')[ID]: return 'TREE'
+    elif n == getTile('BLACK')[ID]: return 'BLACK'
+    elif n == getTile('STONE')[ID]: return 'STONE'
     else: return 'MISSINGNO'
 
 def drawTile(tile):
@@ -146,13 +152,13 @@ def drawTile(tile):
     turtle.down()
     turtle.begin_fill()
     turtle.seth(direct['EAST'])
-    turtle.forward(settings['tilesize'])
+    turtle.forward(tilesize)
     turtle.seth(direct['SOUTH'])
-    turtle.forward(settings['tilesize'])
+    turtle.forward(tilesize)
     turtle.seth(direct['WEST'])
-    turtle.forward(settings['tilesize'])
+    turtle.forward(tilesize)
     turtle.seth(direct['NORTH'])
-    turtle.forward(settings['tilesize'])
+    turtle.forward(tilesize)
     turtle.end_fill()
     turtle.up()
     if istext: printTextInTile(currenttext, currenttextcolor)
@@ -162,40 +168,75 @@ def printTextInTile(text, color):
     currentheading = turtle.heading()
     turtle.up()
     turtle.seth(direct['SOUTH'])
-    turtle.forward(settings['tilesize'])
+    turtle.forward(tilesize)
     turtle.seth(direct['EAST'])
-    turtle.forward(settings['tilesize'] / 2)
+    turtle.forward(tilesize / 2)
     turtle.color(color)
-    turtle.write(text, False, "center", ("Arial", int(settings['tilesize'] / 1.5), "bold"))
+    turtle.write(text, False, "center", ("Arial", int(tilesize / 1.5), "bold"))
     turtle.seth(direct['WEST'])
-    turtle.forward(settings['tilesize'] / 2)
+    turtle.forward(tilesize / 2)
     turtle.seth(direct['NORTH'])
-    turtle.forward(settings['tilesize'])
+    turtle.forward(tilesize)
+    turtle.seth(currentheading)
+
+def printTextInStatus(text):
+    logger.msg(f"Printing status: {text}")
+    currentposition = turtle.position()
+    currentheading = turtle.heading()
+    turtle.up()
+    turtle.goto(0,0)
+    turtle.seth(direct['NORTH'])
+    turtle.forward(tilesize * (mapwidth / 2))
+    turtle.color('white', 'white')
+    turtle.down()
+    turtle.begin_fill()
+    turtle.seth(direct['WEST'])
+    turtle.forward(tilesize * (mapwidth / 2))
+    turtle.seth(direct['NORTH'])
+    turtle.forward(turtle.window_height() * 0.1)
+    turtle.seth(direct['EAST'])
+    turtle.forward(tilesize * mapwidth)
+    turtle.seth(direct['SOUTH'])
+    turtle.forward(turtle.window_height() * 0.1)
+    turtle.seth(direct['WEST'])
+    turtle.forward(tilesize * (mapwidth / 2))
+    turtle.end_fill()
+    turtle.up()
+    turtle.color('black')
+    turtle.write(text, False, "center", ("Arial", int(tilesize / 1.5), "bold"))
+    turtle.goto(currentposition)
     turtle.seth(currentheading)
 
 def drawMap():
 #Draw the whole map.
+    printTextInStatus("Drawing map...")
     currentrow = 0
     currentsquare = 0
+    mentionedunicode = False
     for row in map:
         currentsquare = 0
         currentrow += 1
         for i in row:
             currentsquare += 1
+            if chooseTile(i) == 'TREE' and mentionedunicode == False: printTextInStatus("Loading Unicode...")
             logger.msg(f"Drawing tile: ({currentrow}, {currentsquare}) {i}/{chooseTile(i)}")
             drawTile(i)
+            if chooseTile(i) == 'TREE' and mentionedunicode == False:
+                printTextInStatus("Drawing map...")
+                mentionedunicode = True
             move(ROW)
         move(COL)
     turtle.tracer(True)
     turtle.hideturtle()
+    printTextInStatus("")
     turtle.done()
 
 def debugInfo():
 #Print some info about the map.
     logger.msg(f"Window size: {conf.windowsize}%")
     logger.msg(f"Window width: {turtle.window_width()}px")
-    logger.msg(f"Map width: {settings['mapwidth']}")
-    logger.msg(f"Tile size: {settings['tilesize']}")
+    logger.msg(f"Map width: {mapwidth}")
+    logger.msg(f"Tile size: {tilesize}")
 
 def generate(n):
 #Splits off into various generator functions.
@@ -204,11 +245,97 @@ def generate(n):
     elif n == 1: gen1()
     else: return
 
+def makeBlankMap(tile):
+#Return a map filled with a specific tile.
+    map = []
+    for _ in range(mapwidth):
+        row = [tile] * mapwidth
+        map.append(row)
+    return map
+
+def spreadTiles(tile, chance):
+    #Spread tiles around a tile with a chance% chance to spread.
+    #Returns a list of tuples.
+
+    logger.msg(f"Spreading lake {tile}.")
+
+    returnthis = []
+
+    chance /= 100
+
+    sourcerow = tile[ROW]
+    sourcecol = tile[SQ]
+
+    up = (sourcerow - 1, sourcecol)
+    left = (sourcerow, sourcecol - 1)
+    down = (sourcerow + 1, sourcecol)
+    right = (sourcerow, sourcecol + 1)
+    topleft = (sourcerow - 1, sourcecol - 1)
+    topright = (sourcerow - 1, sourcecol + 1)
+    bottomleft = (sourcerow + 1, sourcecol - 1)
+    bottomright = (sourcerow + 1, sourcecol + 1)
+
+    topedge = False
+    leftedge = False
+    bottomedge = False
+    rightedge = False
+
+    spreadup = False
+    spreaddown = False
+    spreadleft = False
+    spreadright = False
+    spreadtopleft = False
+    spreadtopright = False
+    spreadbottomleft = False
+    spreadbottomright = False
+
+    if sourcerow == 0: topedge = True
+    if sourcecol == 0: leftedge = True
+    if sourcerow == mapwidth - 1: bottomedge = True
+    if sourcecol == mapwidth - 1: rightedge = True
+
+    if random.random() < chance: spreadup = True
+    if random.random() < chance: spreaddown = True
+    if random.random() < chance: spreadleft = True
+    if random.random() < chance: spreadright = True
+    if spreadup and spreadleft and random.random() < chance: spreadtopleft = True
+    if spreadup and spreadright and random.random() < chance: spreadtopright = True
+    if spreaddown and spreadleft and random.random() < chance: spreadbottomleft = True
+    if spreaddown and spreadright and random.random() < chance: spreadbottomright = True
+
+    if topedge: spreadup = spreadtopleft = spreadtopright = False
+    if bottomedge: spreaddown = spreadbottomleft = spreadbottomright = False
+    if leftedge: spreadleft = spreadtopleft = spreadbottomleft = False
+    if rightedge: spreadright = spreadtopright = spreadbottomright = False
+
+    if spreadup: returnthis.append(up)
+    if spreaddown: returnthis.append(down)
+    if spreadleft: returnthis.append(left)
+    if spreadright: returnthis.append(right)
+    if spreadtopleft: returnthis.append(topleft)
+    if spreadtopright: returnthis.append(topright)
+    if spreadbottomleft: returnthis.append(bottomleft)
+    if spreadbottomright: returnthis.append(bottomright)
+
+    spreadtopleft = False
+    spreadtopright = False
+    spreadbottomleft = False
+    spreadbottomright = False
+
+    logger.msg(f"{returnthis}")
+    return returnthis
+
 def gen0():
 #Generator 0: Plain grid
-    tilechoice = int(turtle.numinput('DigiMapGen', 'What tile?:', 0, 0, tilemax))
     global map
-    map = [[tilechoice] * settings['mapwidth']] * settings['mapwidth']
+
+    #Ask user for a tile to fill the map with.
+    tilechoice = int(turtle.numinput('DigiMapGen', 'What tile?:', 0, 0, tilemax))
+
+    #Fill the map with the tile chosen.
+    map = makeBlankMap(tilechoice)
+
+    #Print the finished map.
     for row in map:
         logger.load(row)
 
@@ -216,17 +343,64 @@ def gen1():
 #Generator 1: Overworld
     global map
 
+    lakechance = conf.lakerarity
+    spreadpasses = conf.lakesize
+    treechance = conf.treerarity
+    rockchance = conf.rockrarity
+
     #Fill the map with grass.
-    map = [[tileset['GRASS'][ID]] * settings['mapwidth']] * settings['mapwidth']
+    printTextInStatus("Planting grass...")
+    map = makeBlankMap(getTile('GRASS')[ID])
 
     #LAKE GEN
     #Dot lakes across the map.
-    lakes = []
-    for row in range(0, settings['mapwidth'] - 1):
-        for sq in range(0, settings['mapwidth'] - 1):
-            if random.randint(1, 20) == 1:
-                map[row][sq] = tileset['WATER'][ID]
-                lakes.append([row, sq])
+    printTextInStatus("Seeding lakes...")
+    for row in range(0, mapwidth - 1):
+        for sq in range(0, mapwidth - 1):
+            if random.randint(1, lakechance) == 1:
+                map[row][sq] = getTile('WATER')[ID]
+
+    #Spread those lakes!
+    printTextInStatus("Digging lakes...")
+    for x in range(0, spreadpasses):
+        watertiles = []
+        for row in range(0, mapwidth - 1):
+            for sq in range(0, mapwidth - 1):
+                if map[row][sq] == getTile('WATER')[ID]:
+                    watertiles.append((row, sq))
+        for wt in watertiles:
+            st = spreadTiles(wt, 66)
+            for newtile in st:
+                map[newtile[ROW]][newtile[SQ]] = getTile('WATER')[ID]
+
+    #Make beaches.
+    printTextInStatus("Filling beaches...")
+    watertiles = []
+    for row in range(0, mapwidth - 1):
+        for sq in range(0, mapwidth - 1):
+            if map[row][sq] == getTile('WATER')[ID]:
+                watertiles.append((row, sq))
+    for wt in watertiles:
+        st = spreadTiles(wt, 66)
+        for newtile in st:
+            if map[newtile[ROW]][newtile[SQ]] == getTile('GRASS')[ID]:
+                map[newtile[ROW]][newtile[SQ]] = getTile('SAND')[ID]
+
+    #Dot trees across the map.
+    printTextInStatus("Planting trees...")
+    for row in range(0, mapwidth - 1):
+        for sq in range(0, mapwidth - 1):
+            if random.randint(1, treechance) == 1 and map[row][sq] == getTile('GRASS')[ID]:
+                logger.msg(f"Placing tree at ({row}, {sq}).")
+                map[row][sq] = getTile('TREE')[ID]
+
+    #Dot trees across the map.
+    printTextInStatus("Throwing rocks...")
+    for row in range(0, mapwidth - 1):
+        for sq in range(0, mapwidth - 1):
+            if random.randint(1, rockchance) == 1 and map[row][sq] == getTile('GRASS')[ID]:
+                logger.msg(f"Placing tree at ({row}, {sq}).")
+                map[row][sq] = getTile('STONE')[ID]
 
     #Print the finished map.
     for row in map:
