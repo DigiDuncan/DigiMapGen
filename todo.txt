@@ -2,3 +2,4 @@
 * Increase speed?
 + More generators
 
+v1.0.0: Create .exe.
