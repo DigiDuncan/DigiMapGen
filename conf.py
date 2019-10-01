@@ -1,5 +1,7 @@
 #Window size in percent of screen height. Default: 90.
 windowsize = 90
+#How zoomed in you want the map. Default: 1.
+zoomlevel = 1
 
 #Generator 1 (overworld) settings.
 #Places a lake seed with a 1/value chance per tile. Default: 250

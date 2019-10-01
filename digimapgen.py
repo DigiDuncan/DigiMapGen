@@ -12,7 +12,7 @@ direct = {
     'SOUTH': 270,
     'WEST': 180}
 #Current version number.
-version = "0.3.1.1"
+version = "0.3.2"
 #Amount of generators.
 gencount = 1
 #Move types.
@@ -37,7 +37,8 @@ tileset = {
 'TREE' : [4, '#14a333', '#2e1a03', '\uD83C\uDF32', '#2e1a03'], #Unicode character: 🌲
 'BLACK' : [5, '#000000', '#ffffff', None, None],
 'STONE' : [6, '#666666', '#333333', None, None],
-'HOUSE' : [7, '#14a333', '#2e1a03', "\uD83C\uDFE0", '#AA0000'] #Unicode character: 🏠
+'HOUSE' : [7, '#14a333', '#2e1a03', '\uD83C\uDFE0', '#AA0000'], #Unicode character: 🏠
+'MOUNTAIN' : [8, '#14a333', '#2e1a03', '\u26F0', '#000000']
 }
 
 #Maximum tileset ID.
@@ -53,6 +54,7 @@ monitorwidth = 800
 mapwidth = 50
 generator = 1
 tilesize = 10
+zoomchoice = 1
 
 def main():
 #Main loop.
@@ -64,7 +66,7 @@ def main():
     goToStart()
     turtle.color('white', 'black') #Debug only.
     generate(generator)
-    drawMap()
+    drawMap(zoomchoice)
 
 def getMonitorDimensions():
 #Hacky way to get the current monitor resolution.
@@ -72,6 +74,11 @@ def getMonitorDimensions():
     turtle.setup(1.0, 1.0)
     monitorheight = turtle.window_height()
     monitorwidth = turtle.window_width()
+
+def newTileSize(mapw):
+#Determine tile size using math.
+    global tilesize
+    tilesize = (turtle.window_height() * 0.9) / mapw
 
 def chooseSettings():
 #Get user input to determine to settings.
@@ -98,8 +105,7 @@ def chooseSettings():
     else: winsize = conf.windowsize / 100
     getMonitorDimensions()
     turtle.setup(monitorheight * winsize, monitorheight * winsize)
-    #Determine tile size using math.
-    tilesize = (turtle.window_height() * 0.9) / mapwidth
+    newTileSize(mapwidth)
 
 def goToStart():
 #Go to the top left of the map.
@@ -140,6 +146,7 @@ def chooseTile(n):
     elif n == getTile('BLACK')[ID]: return 'BLACK'
     elif n == getTile('STONE')[ID]: return 'STONE'
     elif n == getTile('HOUSE')[ID]: return 'HOUSE'
+    elif n == getTile('MOUNTAIN')[ID]: return 'MOUNTAIN'
     else: return 'MISSINGNO'
 
 def drawTile(tile):
@@ -205,12 +212,35 @@ def printTextInStatus(text):
     turtle.end_fill()
     turtle.up()
     turtle.color('black')
-    turtle.write(text, False, "center", ("Arial", int(tilesize / 1.5), "bold"))
+    turtle.write(text, False, "center", ("Arial", 18, "bold"))
     turtle.goto(currentposition)
     turtle.seth(currentheading)
 
-def drawMap():
+def zoommap(zoom):
+    global map, mapwidth, tilesize
+    oldmap = map
+    newmap = []
+    for row in map:
+        newrow = []
+        for i in row:
+            for x in range(zoom):
+                newrow.append(i)
+        for x in range(zoom):
+            newmap.append(newrow)
+    map = newmap
+    mapwidth *= zoom
+    newTileSize(mapwidth)
+
+
+def drawMap(zoom):
 #Draw the whole map.
+    printTextInStatus("Zooming map...")
+    global map
+    if zoom > 1:
+        zoommap(zoom)
+    #Print the finished map.
+    for row in map:
+        logger.load(row)
     printTextInStatus("Drawing map...")
     currentrow = 0
     currentsquare = 0
@@ -346,7 +376,7 @@ def gen0():
 
 def gen1():
 #Generator 1: Overworld
-    global map
+    global map, zoomchoice
 
     lakechance = conf.lakerarity
     spreadpasses = conf.lakesize
@@ -354,6 +384,7 @@ def gen1():
     rockchance = conf.rockrarity
     townchance = conf.townrarity
     townsize = conf.townsize
+    zoomchoice = conf.zoomlevel
 
     #Fill the map with grass.
     printTextInStatus("Planting grass...")
@@ -429,10 +460,6 @@ def gen1():
             if random.randint(1, rockchance) == 1 and map[row][sq] == getTile('GRASS')[ID]:
                 logger.msg(f"Placing tree at ({row}, {sq}).")
                 map[row][sq] = getTile('STONE')[ID]
-
-    #Print the finished map.
-    for row in map:
-        logger.load(row)
 
 #Main loop.
 try:
