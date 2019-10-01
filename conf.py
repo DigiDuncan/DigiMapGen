@@ -10,3 +10,7 @@ lakesize = 2
 treerarity = 20
 #Tries to place a rock with a 1/value chance per tile. Default: 100.
 rockrarity = 100
+#Places a town seed with a 1/value chance per tile. Default: 250
+townrarity = 250
+#Town size. Default: 1.
+townsize = 1

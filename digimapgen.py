@@ -12,7 +12,7 @@ direct = {
     'SOUTH': 270,
     'WEST': 180}
 #Current version number.
-version = "0.3"
+version = "0.3.1"
 #Amount of generators.
 gencount = 1
 #Move types.
@@ -36,7 +36,8 @@ tileset = {
 'SAND' : [3, '#fff373', '#ffce52', None, None],
 'TREE' : [4, '#14a333', '#2e1a03', '\uD83C\uDF32', '#2e1a03'], #Unicode character: 🌲
 'BLACK' : [5, '#000000', '#ffffff', None, None],
-'STONE' : [6, '#666666', '#333333', None, None]
+'STONE' : [6, '#666666', '#333333', None, None],
+'HOUSE' : [7, '#14a333', '#2e1a03', "\uD83C\uDFE0", '#AA0000'] #Unicode character: 🏠
 }
 
 #Maximum tileset ID.
@@ -138,6 +139,7 @@ def chooseTile(n):
     elif n == getTile('TREE')[ID]: return 'TREE'
     elif n == getTile('BLACK')[ID]: return 'BLACK'
     elif n == getTile('STONE')[ID]: return 'STONE'
+    elif n == getTile('HOUSE')[ID]: return 'HOUSE'
     else: return 'MISSINGNO'
 
 def drawTile(tile):
@@ -347,6 +349,8 @@ def gen1():
     spreadpasses = conf.lakesize
     treechance = conf.treerarity
     rockchance = conf.rockrarity
+    townchance = conf.townrarity
+    townsize = conf.townsize
 
     #Fill the map with grass.
     printTextInStatus("Planting grass...")
@@ -385,6 +389,27 @@ def gen1():
         for newtile in st:
             if map[newtile[ROW]][newtile[SQ]] == getTile('GRASS')[ID]:
                 map[newtile[ROW]][newtile[SQ]] = getTile('SAND')[ID]
+
+    #Drop towns across the map.
+    printTextInStatus("Starting towns...")
+    for row in range(0, mapwidth - 1):
+        for sq in range(0, mapwidth - 1):
+            if random.randint(1, townchance) == 1 and map[row][sq] == getTile('GRASS')[ID]:
+                map[row][sq] = getTile('HOUSE')[ID]
+
+    #Grow towns.
+    printTextInStatus("Expanding towns...")
+    for x in range(0, townsize):
+        housetiles = []
+        for row in range(0, mapwidth - 1):
+            for sq in range(0, mapwidth - 1):
+                if map[row][sq] == getTile('HOUSE')[ID]:
+                    watertiles.append((row, sq))
+        for wt in watertiles:
+            st = spreadTiles(wt, 80)
+            for newtile in st:
+                if map[newtile[ROW]][newtile[SQ]] == getTile('GRASS')[ID]:
+                    map[newtile[ROW]][newtile[SQ]] = getTile('HOUSE')[ID]
 
     #Dot trees across the map.
     printTextInStatus("Planting trees...")
