@@ -12,7 +12,7 @@ direct = {
     'SOUTH': 270,
     'WEST': 180}
 #Current version number.
-version = "0.3.1"
+version = "0.3.1.1"
 #Amount of generators.
 gencount = 1
 #Move types.
@@ -219,11 +219,13 @@ def drawMap():
         currentsquare = 0
         currentrow += 1
         for i in row:
+            #printTextInStatus(f"Drawing map... ({currentrow}, {currentsquare})") #This is cool but really slow.
             currentsquare += 1
-            if chooseTile(i) == 'TREE' and mentionedunicode == False: printTextInStatus("Loading Unicode...")
+            if (chooseTile(i) == 'TREE' or chooseTile(i) == 'HOUSE') and mentionedunicode == False:
+                printTextInStatus("Loading Unicode...")
             logger.msg(f"Drawing tile: ({currentrow}, {currentsquare}) {i}/{chooseTile(i)}")
             drawTile(i)
-            if chooseTile(i) == 'TREE' and mentionedunicode == False:
+            if (chooseTile(i) == 'TREE' or chooseTile(i) == 'HOUSE') and mentionedunicode == False:
                 printTextInStatus("Drawing map...")
                 mentionedunicode = True
             move(ROW)
@@ -239,6 +241,7 @@ def debugInfo():
     logger.msg(f"Window width: {turtle.window_width()}px")
     logger.msg(f"Map width: {mapwidth}")
     logger.msg(f"Tile size: {tilesize}")
+    logger.msg(f"Generator: {generator}")
 
 def generate(n):
 #Splits off into various generator functions.
@@ -324,7 +327,7 @@ def spreadTiles(tile, chance):
     spreadbottomleft = False
     spreadbottomright = False
 
-    logger.msg(f"{returnthis}")
+    #logger.msg(f"{returnthis}")
     return returnthis
 
 def gen0():
