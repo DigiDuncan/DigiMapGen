@@ -1,0 +1,4 @@
+* Move tileset and tileset functions to tileset.py
+* Increase speed?
++ More generators
+
