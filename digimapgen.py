@@ -453,7 +453,7 @@ def gen1():
                 logger.msg(f"Placing tree at ({row}, {sq}).")
                 map[row][sq] = getTile('TREE')[ID]
 
-    #Dot trees across the map.
+    #Dot rocks across the map.
     printTextInStatus("Throwing rocks...")
     for row in range(0, mapwidth - 1):
         for sq in range(0, mapwidth - 1):
