@@ -1,5 +1,7 @@
 * Move tileset and tileset functions to tileset.py
 * Increase speed?
 + More generators
++ Print function
 
 v1.0.0: Create .exe.
+* Phone version
