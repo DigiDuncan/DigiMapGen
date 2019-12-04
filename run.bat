@@ -1,2 +1,2 @@
-python digimapgen.py
+py digimapgen.py
 pause
